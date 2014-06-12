@@ -258,7 +258,6 @@ describe("index.js", function() {
             .hawk(hawkCredentials)
             .expect(401)
             .end(function(err, res) {
-              expect(res.header['www-authenticate']).to.eql('Hawk');
               done();
             });
         });
