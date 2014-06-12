@@ -22,7 +22,6 @@ var statsdClient = require("../loop").statsdClient;
 var requireHawkSession = require("../loop").requireHawkSession;
 var authenticate = require("../loop").authenticate;
 
-
 var Token = require("../loop/token").Token;
 var tokenlib = require("../loop/tokenlib");
 var fxaAuth = require("../loop/fxa");
@@ -67,9 +66,7 @@ function register(url, assertion, credentials, cb) {
     .send({'simple_push_url': url})
     .expect(200)
     .end(function(err, resp) {
-      if (err) {
-        throw err;
-      }
+      if (err) throw err;
       cb(resp);
     });
 }
@@ -148,6 +145,7 @@ describe("HTTP API exposed by the server", function() {
           .options(route)
           .set('Origin', 'http://not-authorized')
           .end(function(err, res) {
+            if (err) throw err;
             expect(res.headers)
               .not.to.have.property('Access-Control-Allow-Origin');
             done();
@@ -197,6 +195,7 @@ describe("HTTP API exposed by the server", function() {
           supertest(app)[method](route)
             .set('Origin', 'http://not-authorized')
             .end(function(err, res) {
+              if (err) throw err;
               expect(res.headers)
                 .not.to.have.property('Access-Control-Allow-Origin');
               done();
@@ -220,9 +219,7 @@ describe("HTTP API exposed by the server", function() {
         .get('/__heartbeat__')
         .expect(503)
         .end(function(err, res) {
-          if (err) {
-            throw err;
-          }
+          if (err) throw err;
           expect(res.body).to.eql({
             'storage': false,
             'provider': true
@@ -239,9 +236,7 @@ describe("HTTP API exposed by the server", function() {
         .get('/__heartbeat__')
         .expect(503)
         .end(function(err, res) {
-          if (err) {
-            throw err;
-          }
+          if (err) throw err;
           expect(res.body).to.eql({
             'storage': true,
             'provider': false
@@ -258,9 +253,7 @@ describe("HTTP API exposed by the server", function() {
         .get('/__heartbeat__')
         .expect(200)
         .end(function(err, res) {
-          if (err) {
-            throw err;
-          }
+          if (err) throw err;
           expect(res.body).to.eql({
             'storage': true,
             'provider': true
@@ -277,6 +270,7 @@ describe("HTTP API exposed by the server", function() {
         .expect(200)
         .expect('Content-Type', /json/)
         .end(function(err, res) {
+          if (err) throw err;
           ["name", "description", "version", "homepage", "endpoint"]
           .forEach(function(key) {
             expect(res.body).to.have.property(key);
@@ -293,6 +287,7 @@ describe("HTTP API exposed by the server", function() {
           .get('/')
           .expect(200)
           .end(function(err, res) {
+            if (err) throw err;
             expect(res.body).not.to.have.property("version");
             done();
           });
@@ -328,9 +323,7 @@ describe("HTTP API exposed by the server", function() {
         .send({callerId: callerId, expiresIn: "not a number"})
         .expect(400)
         .end(function(err, res) {
-          if (err) {
-            throw err;
-          }
+          if (err) throw err;
           expect(res.body).eql({
             status: "errors",
             errors: [{location: "body",
@@ -349,9 +342,7 @@ describe("HTTP API exposed by the server", function() {
           .send({callerId: callerId, expiresIn: "10"})
           .expect(400)
           .end(function(err, res) {
-            if (err) {
-              throw err;
-            }
+            if (err) throw err;
             expect(res.body).eql({
               status: "errors",
               errors: [{location: "body",
@@ -383,6 +374,7 @@ describe("HTTP API exposed by the server", function() {
           .expect(200)
           .send({callerId: callerId, expiresIn: 5})
           .end(function(err, res) {
+            if (err) throw err;
             var callUrl = res.body && res.body.call_url,
                 token;
 
@@ -400,6 +392,7 @@ describe("HTTP API exposed by the server", function() {
           .expect(200)
           .send({callerId: callerId})
           .end(function(err, res) {
+            if (err) throw err;
             var callUrl = res.body && res.body.call_url, token;
 
             expect(callUrl).to.not.equal(null);
@@ -420,6 +413,7 @@ describe("HTTP API exposed by the server", function() {
           .expect(200)
           .send({callerId: callerId})
           .end(function(err, res) {
+            if (err) throw err;
             var expiresAt = res.body && res.body.expiresAt;
             expect(expiresAt).eql(387830);
             done();
@@ -432,9 +426,7 @@ describe("HTTP API exposed by the server", function() {
           .expect(200)
           .send({callerId: callerId})
           .end(function(err, res) {
-            if (err) {
-              throw err;
-            }
+            if (err) throw err;
             assert.calledTwice(statsdClient.count);
             assert.calledWithExactly(statsdClient.count, "loop-call-urls", 1);
             assert.calledWithExactly(
@@ -473,9 +465,7 @@ describe("HTTP API exposed by the server", function() {
         .send({}) // XXX sending nothing fails here, investigate
         .expect(400)
         .end(function(err, res) {
-          if (err) {
-            throw err;
-          }
+          if (err) throw err;
           expectFormatedError(res.body, "body", "simple_push_url");
           done();
         });
@@ -526,13 +516,9 @@ describe("HTTP API exposed by the server", function() {
         .send({'simple_push_url': pushURL})
         .hawk(hawkCredentials)
         .expect(200).end(function(err, res) {
-          if (err) {
-            throw err;
-          }
+          if (err) throw err;
           storage.getUserSimplePushURLs(userHmac, function(err, records) {
-            if (err) {
-              throw err;
-            }
+            if (err) throw err;
             expect(records[0]).eql(pushURL);
             done();
           });
@@ -545,9 +531,7 @@ describe("HTTP API exposed by the server", function() {
         register(url1, expectedAssertion, hawkCredentials, function() {
           register(url2, expectedAssertion, hawkCredentials, function() {
             storage.getUserSimplePushURLs(userHmac, function(err, records) {
-              if (err) {
-                throw err;
-              }
+              if (err) throw err;
               expect(records.length).eql(2);
               done();
             });
@@ -559,9 +543,7 @@ describe("HTTP API exposed by the server", function() {
       register(url1, expectedAssertion, hawkCredentials, function() {
         register(url2, expectedAssertion, hawkCredentials, function() {
           storage.getUserSimplePushURLs(userHmac, function(err, records) {
-            if (err) {
-              throw err;
-            }
+            if (err) throw err;
             expect(records.length).eql(1);
             done();
           });
@@ -599,9 +581,7 @@ describe("HTTP API exposed by the server", function() {
         .send({
           'simple_push_url': pushURL,
         }).expect(200).end(function(err, res) {
-          if (err) {
-            throw err;
-          }
+          if (err) throw err;
           assert.calledOnce(statsdClient.count);
           assert.calledWithExactly(
             statsdClient.count,
@@ -619,9 +599,7 @@ describe("HTTP API exposed by the server", function() {
           .send({
             'simple_push_url': pushURL,
           }).expect(200).end(function(err, res) {
-            if (err) {
-              throw err;
-            }
+            if (err) throw err;
             assert.notCalled(statsdClient.count);
             done();
           });
@@ -675,9 +653,7 @@ describe("HTTP API exposed by the server", function() {
 
     it("should add the token uuid in the revocation list", function(done) {
       req.expect(204).end(function(err, res) {
-        if (err) {
-          throw err;
-        }
+        if (err) throw err;
         storage.isURLRevoked(uuid, function(err, record) {
           expect(record).eql(true);
           done(err);
@@ -764,6 +740,7 @@ describe("HTTP API exposed by the server", function() {
       });
 
       req.query({version: 0}).expect(200).end(function(err, res) {
+        if (err) throw err;
         expect(res.body).to.deep.equal({calls: callsList});
         done(err);
       });
@@ -778,6 +755,7 @@ describe("HTTP API exposed by the server", function() {
       }];
 
       req.query({version: 2}).expect(200).end(function(err, res) {
+        if (err) throw err;
         expect(res.body).to.deep.equal({calls: callsList});
         done(err);
       });
@@ -878,9 +856,7 @@ describe("HTTP API exposed by the server", function() {
             register(url1, expectedAssertion, hawkCredentials, function() {
               register(url2, expectedAssertion, hawkCredentials, function() {
                 jsonReq.end(function(err, res) {
-                  if (err) {
-                    throw err;
-                  }
+                  if (err) throw err;
                   expect(intersection(requests.map(function(record) {
                     return record.url;
                   }), [url1, url2]).length).eql(2);
@@ -896,9 +872,7 @@ describe("HTTP API exposed by the server", function() {
         it("should return sessionId, apiKey and caller token info",
           function(done) {
             jsonReq.end(function(err, res) {
-              if (err) {
-                throw err;
-              }
+              if (err) throw err;
 
               var body = res.body;
               expect(body).to.have.property('callId');
@@ -916,14 +890,10 @@ describe("HTTP API exposed by the server", function() {
         it("should store sessionId and callee token info in database",
           function(done) {
             jsonReq.end(function(err, res) {
-              if (err) {
-                throw err;
-              }
+              if (err) throw err;
 
               storage.getUserCalls(userHmac, function(err, items) {
-                if (err) {
-                  throw err;
-                }
+                if (err) throw err;
                 expect(items.length).eql(1);
                 expect(items[0].callId).to.have.length(32);
                 delete items[0].callId;
@@ -1037,9 +1007,7 @@ describe("HTTP API exposed by the server", function() {
 
       it("should return a 200 ok on an existing call.", function(done) {
         createCall.end(function(err, res) {
-          if (err) {
-            throw err;
-          }
+          if (err) throw err;
           var callId = res.body.callId;
 
           supertest(app)
