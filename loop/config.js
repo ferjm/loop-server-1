@@ -216,6 +216,11 @@ var conf = convict({
     doc: "The duration of hawk credentials (in seconds)",
     format: Number,
     default: 3600 * 24 * 30 // One month.
+  },
+  heartbeatTimeout: {
+    doc: "Timeout for requests when doing heartbeat checks (ms)",
+    format: Number,
+    default: 30
   }
 });
 
